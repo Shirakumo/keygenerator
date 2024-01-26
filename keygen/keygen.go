@@ -28,6 +28,11 @@ type FileResponse struct {
 	Files []File `json:"data"`
 }
 
+type GenericResponse struct {
+	Status int `json:"status"`
+	Message string `json:"message"`
+}
+
 type Key struct {
 	Domain string
 	Code string
@@ -124,12 +129,12 @@ func FetchKeyFiles(key *Key) ([]File, error) {
 	if err != nil {
 		return nil, err
 	}
+	if res.StatusCode > 299 {
+		return nil, errors.New("Internal server failure")
+	}
 	
 	body, err := io.ReadAll(res.Body)
 	res.Body.Close()
-	if res.StatusCode > 299 {
-		return nil, errors.New("Bad HTTP code")
-	}
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +142,13 @@ func FetchKeyFiles(key *Key) ([]File, error) {
 	var response FileResponse
 	err = json.Unmarshal(body, &response)
 	if err != nil {
-		return nil, err
+		var generic GenericResponse
+		err = json.Unmarshal(body, &generic)
+		if err != nil {
+			return nil, err
+		} else {
+			return nil, errors.New(generic.Message)
+		}
 	}
 	return response.Files, nil
 }
@@ -149,7 +160,7 @@ func ParseKeyURL(url string) (*Key, error){
 	}
 	m := r.FindStringSubmatch(url)
 	if m == nil {
-		return nil, errors.New("Bad Key URL")
+		return nil, errors.New("The Key URL is malformed")
 	}
 	key := &Key{}
 	key.Domain = m[1]

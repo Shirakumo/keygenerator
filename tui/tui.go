@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"bufio"
 	"time"
+	"flag"
 	"log"
 	"fmt"
 	"os"
@@ -30,6 +31,13 @@ func prompt(message string) string {
 func Main(conf config.Config) {
 	var key *keygen.Key = nil
 	var err error = nil
+	var files []keygen.File = nil
+
+	flag.StringVar(&conf.KeyURL, "key", conf.KeyURL, "The Key URL to access")
+	flag.StringVar(&conf.LocalPath, "path", conf.LocalPath, "The directory to extract things to")
+	flag.StringVar(&conf.PackagePath, "tmp", conf.PackagePath, "The directory to store packages in")
+	flag.Parse()
+
 	for true {
 		if conf.KeyURL == "" {
 			conf.KeyURL = prompt("Enter the Key URL:")
@@ -44,16 +52,17 @@ func Main(conf config.Config) {
 			fmt.Println(err)
 			conf.KeyURL = ""
 		} else {
-			break
+			fmt.Println("Fetching entries for "+key.Code)
+			files, err = keygen.FetchKeyFiles(key)
+			if err != nil {
+				log.Fatal(err)
+				conf.KeyURL = ""
+			} else {
+				break
+			}
 		}
 	}
 
-	fmt.Println("Fetching entries for "+key.Code)
-	files, err := keygen.FetchKeyFiles(key)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
 	conf.LastChecked = time.Now().Unix()
 	saveConfig(conf)
 
