@@ -22,21 +22,27 @@ func main() {
 	if err != nil {
 		log.Print(err)
 	}
-	
-	if conf.KeyURL == "" {
-		conf.KeyURL = gui.ShowKeyPrompt()
+
+	var key *keygen.Key
+	for true {
 		if conf.KeyURL == "" {
-			return
+			conf.KeyURL = gui.ShowKeyPrompt()
+			if conf.KeyURL == "" {
+				return
+			}
+			saveConfig(conf)
 		}
-		saveConfig(conf)
+
+		key, err = keygen.ParseKeyURL(conf.KeyURL)
+		if err != nil {
+			log.Fatal(err)
+			gui.ShowFailure(err)
+		} else {
+			break
+		}
 	}
 
-	key, err := keygen.ParseKeyURL(conf.KeyURL)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-	
+	log.Print("Fetching entries for "+key.Code)
 	files, err := keygen.FetchKeyFiles(key)
 	if err != nil {
 		log.Fatal(err)
@@ -44,15 +50,17 @@ func main() {
 	conf.LastChecked = time.Now().Unix()
 	saveConfig(conf)
 
+	log.Print("Checking for new updates...")
 	file := keygen.FindMatchingOSFile(files)
 	if conf.LocalFile != nil {
 		file = keygen.FindUpdatedFile(files, conf.LocalFile)
 	}
 	
 	if file == nil {
-		log.Fatal("No File Matched")
+		log.Print("No file matched")
 		gui.ShowFailure(errors.New("No new updates found."))
 	} else {
+		log.Print("Found: "+file.Version)
 		filepath := gui.ShowNewVersionPrompt(file)
 		if filepath != "" {
 			log.Print("Downloading "+file.URL+" to "+filepath)

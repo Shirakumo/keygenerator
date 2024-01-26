@@ -4,13 +4,15 @@ import (
 	"os"
 	"keygenerator/keygen"
 	"path/filepath"
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 )
 
+var a fyne.App = app.New()
+
 func ShowKeyPrompt() string {
-	a := app.New()
 	w := a.NewWindow("Keygen Updater")
 	
 	input := widget.NewEntry()
@@ -28,7 +30,6 @@ func ShowKeyPrompt() string {
 }
 
 func ShowFailure(err error) {
-	a := app.New()
 	w := a.NewWindow("Keygen Updater")
 	
 	w.SetContent(container.NewVBox(
@@ -41,7 +42,6 @@ func ShowFailure(err error) {
 }
 
 func ShowSuccess(str string) {
-	a := app.New()
 	w := a.NewWindow("Keygen Updater")
 	
 	w.SetContent(container.NewVBox(
@@ -55,7 +55,6 @@ func ShowSuccess(str string) {
 
 func ShowNewVersionPrompt(file *keygen.File) string {
 	path := ""
-	a := app.New()
 	w := a.NewWindow("Keygen Updater")
 
 	input := widget.NewEntry()
