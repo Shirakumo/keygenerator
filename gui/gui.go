@@ -11,10 +11,9 @@ import (
 )
 
 var a fyne.App = app.New()
+var w fyne.Window = a.NewWindow("Keygen Updater")
 
 func ShowKeyPrompt() string {
-	w := a.NewWindow("Keygen Updater")
-	
 	input := widget.NewEntry()
 	input.SetPlaceHolder("https://keygen.tymoon.eu/access/...")
 
@@ -25,38 +24,29 @@ func ShowKeyPrompt() string {
 			w.Close()
 		}),
 	))
-	w.ShowAndRun()
 	return input.Text
 }
 
 func ShowFailure(err error) {
-	w := a.NewWindow("Keygen Updater")
-	
 	w.SetContent(container.NewVBox(
 		widget.NewLabel("An error occurred: "+err.Error()),
 		widget.NewButton("OK", func() {
 			w.Close()
 		}),
 	))
-	w.ShowAndRun()
 }
 
 func ShowSuccess(str string) {
-	w := a.NewWindow("Keygen Updater")
-	
 	w.SetContent(container.NewVBox(
 		widget.NewLabel("Success: "+str),
 		widget.NewButton("OK", func() {
 			w.Close()
 		}),
 	))
-	w.ShowAndRun()
 }
 
 func ShowNewVersionPrompt(file *keygen.File) string {
 	path := ""
-	w := a.NewWindow("Keygen Updater")
-
 	input := widget.NewEntry()
 	input.Text = filepath.Join(os.TempDir(), file.Filename)
 	input.SetPlaceHolder("Package path...")
@@ -69,6 +59,5 @@ func ShowNewVersionPrompt(file *keygen.File) string {
 			w.Close()
 		}),
 	))
-	w.ShowAndRun()
 	return path
 }

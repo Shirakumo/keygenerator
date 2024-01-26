@@ -12,6 +12,7 @@ type Config struct {
 	LastChecked int64 `json:"last-checked"`
 	LocalFile *keygen.File `json:"local-file"`
 	LocalPath string `json:"local-path"`
+	PackagePath string `json:"package-path"`
 }
 
 func Default(keyURL string) Config {
@@ -24,6 +25,7 @@ func Default(keyURL string) Config {
 	config.KeyURL = keyURL
 	config.LastChecked = 0
 	config.LocalPath = filepath.Dir(ex)
+	config.PackagePath = os.TempDir()
 	return config
 }
 

@@ -18,7 +18,7 @@ type File struct {
 	Filename string `json:"filename"`
 	Types []string `json:"types"`
 	Version string `json:"version"`
-	LastModified int `json:"last-modified"`
+	LastModified int64 `json:"last-modified"`
 	URL string `json:"url"`
 }
 
