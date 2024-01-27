@@ -7,18 +7,9 @@ import (
 	"strconv"
 	"bufio"
 	"time"
-	"flag"
-	"log"
 	"fmt"
 	"os"
 )
-
-func saveConfig(conf config.Config){
-	err := config.WriteDefault(conf)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
 
 func prompt(message string) string {
 	scanner := bufio.NewScanner(os.Stdin)
@@ -28,15 +19,10 @@ func prompt(message string) string {
 	return scanner.Text()
 }
 
-func Main(conf config.Config) {
+func Main(conf *config.Config) {
 	var key *keygen.Key = nil
 	var err error = nil
 	var files []keygen.File = nil
-
-	flag.StringVar(&conf.KeyURL, "key", conf.KeyURL, "The Key URL to access")
-	flag.StringVar(&conf.LocalPath, "path", conf.LocalPath, "The directory to extract things to")
-	flag.StringVar(&conf.PackagePath, "tmp", conf.PackagePath, "The directory to store packages in")
-	flag.Parse()
 
 	for true {
 		if conf.KeyURL == "" {
@@ -44,7 +30,6 @@ func Main(conf config.Config) {
 			if conf.KeyURL == "" {
 				return
 			}
-			saveConfig(conf)
 		}
 
 		key, err = keygen.ParseKeyURL(conf.KeyURL)
@@ -55,7 +40,7 @@ func Main(conf config.Config) {
 			fmt.Println("Fetching entries for "+key.Code)
 			files, err = keygen.FetchKeyFiles(key)
 			if err != nil {
-				log.Fatal(err)
+				fmt.Println(err)
 				conf.KeyURL = ""
 			} else {
 				break
@@ -64,7 +49,6 @@ func Main(conf config.Config) {
 	}
 
 	conf.LastChecked = time.Now().Unix()
-	saveConfig(conf)
 
 	candidate := keygen.FindMatchingOSFile(files)
 	if conf.LocalFile != nil {
@@ -90,7 +74,7 @@ func Main(conf config.Config) {
 		if res != "" {
 			selected, err := strconv.Atoi(res);
 			if err != nil {
-				log.Fatal(err)
+				fmt.Println(err)
 			} else {
 				candidate = &files[selected]
 				break
@@ -112,19 +96,18 @@ func Main(conf config.Config) {
 		fmt.Println("Downloading to "+path)
 		err = keygen.DownloadPackage(candidate, path)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
 			return
 		}
 
 		fmt.Println("Extracting "+path+" to "+conf.LocalPath)
 		err = keygen.ExtractPackage(path, conf.LocalPath)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
 			return
 		}
 
 		conf.LocalFile = candidate;
-		saveConfig(conf)
 		fmt.Println("Successfully updated to "+candidate.Version)
 		return
 	}

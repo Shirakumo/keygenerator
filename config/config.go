@@ -54,7 +54,7 @@ func Write(config Config, path string) error {
 	return os.WriteFile(path, b, 0660)
 }
 
-func defaultPath() string {
+func DefaultPath() string {
 	ex, err := os.Executable()
     if err != nil {
         panic(err)
@@ -63,9 +63,9 @@ func defaultPath() string {
 }
 
 func ReadDefault() (Config, error) {
-	return Read(defaultPath())
+	return Read(DefaultPath())
 }
 
 func WriteDefault(config Config) error {
-	return Write(config, defaultPath())
+	return Write(config, DefaultPath())
 }
