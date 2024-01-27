@@ -10,10 +10,10 @@ import (
 )
 
 func main() {
-	configFile := flag.String("config", "", "The config file to read")
-	keyURL := flag.String("key", "", "The key URL to access")
-	localPath := flag.String("path", "", "The directory to extract things to")
-	packagePath := flag.String("tmp", "", "The directory to store packages in")
+	configFile := flag.String("config", "", "")
+	keyURL := flag.String("key", "", "")
+	localPath := flag.String("path", "", "")
+	packagePath := flag.String("tmp", "", "")
 	flag.Parse()
 
 	var conf config.Config
@@ -48,20 +48,23 @@ func main() {
 		fmt.Println(`Manage an installation of files from a Keygen key.
 
 Usage:
-      keygenerator [action] flag...
+  keygenerator [action] flag...
 
 Actions:
-      update            Update the application from the key
-      list              List available files from the key
-      tui               Show an interactive terminal UI
-      gui               Show an interactive graphical UI (default)
-      help              Show this help
+  update          ---  Update the application from the key
+  list            ---  List available files from the key
+  tui             ---  Show an interactive terminal UI
+  gui             ---  Show an interactive graphical UI (default)
+  help            ---  Show this help
 
-Flags:`)
-		flag.PrintDefaults()
-		fmt.Println(`
+Flags:
+  --config file   --- Specify the configuration file to read
+  --key URL       --- Set the key URL to access
+  --path dir      --- Set the path to extract packages to
+  --tmp dir       --- Set the path to download packages to
+
 Environment Variables:
-      KEY               Alternative way to pass the key URL
+  KEY             --- Alternative way to pass the key URL
 
 By default the updater will download packages to a temporary directory
 and extract them into the same directory it is residing in. It will
@@ -73,12 +76,12 @@ future sessions that way and does not need to be set again.
 You can access the source code of this updater application at the
 following URL:
 
-     https://shirakumo.org/projects/keygenerator
+  https://shirakumo.org/projects/keygenerator
 
 You can access precompiled binaries of this updater application at the
 following URL:
 
-     https://shirakumo.org/projects/keygenerator/releases/latest
+  https://shirakumo.org/projects/keygenerator/releases/latest
 
 - (c) 2024 Yukari Hafner, Shirakumo`)
 	}
