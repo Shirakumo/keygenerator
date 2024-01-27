@@ -17,6 +17,8 @@ If you would like to use the updater without a GUI, you can invoke it from the c
     	The directory to extract things to
   -tmp string
     	The directory to store packages in
+  -auto
+        Whether to perform a one-shot auto-update. Ipmlies --gui false
 ::
 
 So for instance:
