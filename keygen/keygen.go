@@ -105,6 +105,23 @@ func ExtractPackage(src, dest string) error {
 }
 
 func DownloadPackage(file *File, path string) error {
+	return DownloadPackageProgress(file, path, func(progress float64){})
+}
+
+type ProgressCallback func(progress float64)
+type Progress struct {
+	Total int64
+	Current int64
+	Callback ProgressCallback
+}
+func (p *Progress) Write(b []byte) (n int, err error) {
+	n = len(b)
+	p.Current = p.Current + int64(n)
+	p.Callback(float64(p.Current * 100) / float64(p.Total))
+	return
+}
+
+func DownloadPackageProgress(file *File, path string, progress ProgressCallback) error {
 	out, err := os.Create(path)
 	if err != nil {
 		return err
@@ -119,8 +136,14 @@ func DownloadPackage(file *File, path string) error {
 	if res.StatusCode > 299 {
 		return errors.New("Internal server failure")
 	}
-	
-	_, err = io.Copy(out, res.Body)
+
+	prog := Progress{
+		Total: res.ContentLength,
+		Current: 0,
+		Callback: progress,
+	}
+
+	_, err = io.Copy(io.MultiWriter(out, &prog), res.Body)
 	if err != nil {
 		return err
 	}

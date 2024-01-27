@@ -49,14 +49,19 @@ func (item *FileItem) CreateRenderer() fyne.WidgetRenderer {
 }
 
 func performDownload(file *keygen.File, conf *config.Config, w fyne.Window){
+	progress := widget.NewProgressBar()
+	progress.Min = 0.0
+	progress.Max = 100.0
 	w.SetContent(container.NewVBox(
 		widget.NewLabel("Downloading ..."),
-		widget.NewProgressBarInfinite(),
+		progress,
 	))
 
 	path := filepath.Join(conf.PackagePath, file.Filename)
 	log.Printf("Downloading %v to %v\n", file.URL, path)
-	err := keygen.DownloadPackage(file, path)
+	err := keygen.DownloadPackageProgress(file, path, func(prog float64){
+		progress.SetValue(prog)
+	})
 	if err != nil {
 		log.Print(err)
 		dialog.ShowError(err, w)
