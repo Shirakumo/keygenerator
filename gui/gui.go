@@ -55,7 +55,7 @@ func performDownload(file *keygen.File, conf *config.Config, w fyne.Window){
 	))
 
 	path := filepath.Join(conf.PackagePath, file.Filename)
-	log.Printf("Downloading %v to %v\n", file.Version, path)
+	log.Printf("Downloading %v to %v\n", file.URL, path)
 	err := keygen.DownloadPackage(file, path)
 	if err != nil {
 		log.Print(err)

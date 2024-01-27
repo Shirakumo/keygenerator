@@ -111,13 +111,16 @@ func DownloadPackage(file *File, path string) error {
 	}
 	defer out.Close()
 
-	resp, err := http.Get(file.URL)
+	res, err := http.Get(file.URL)
+	defer res.Body.Close()
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	if res.StatusCode > 299 {
+		return errors.New("Internal server failure")
+	}
 	
-	_, err = io.Copy(out, resp.Body)
+	_, err = io.Copy(out, res.Body)
 	if err != nil {
 		return err
 	}
@@ -126,6 +129,7 @@ func DownloadPackage(file *File, path string) error {
 
 func FetchKeyFiles(key *Key) ([]File, error) {
 	res, err := http.Get("https://"+key.Domain+"/api/keygen/key/files?code="+key.Code+"&authcode="+key.Authcode)
+	defer res.Body.Close()
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +138,6 @@ func FetchKeyFiles(key *Key) ([]File, error) {
 	}
 	
 	body, err := io.ReadAll(res.Body)
-	res.Body.Close()
 	if err != nil {
 		return nil, err
 	}
