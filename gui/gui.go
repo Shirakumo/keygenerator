@@ -11,6 +11,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"log"
 	"time"
+	"path/filepath"
 )
 
 type FileItem struct {
@@ -47,8 +48,37 @@ func (item *FileItem) CreateRenderer() fyne.WidgetRenderer {
 	return widget.NewSimpleRenderer(c)
 }
 
-func performDownload(conf *config.Config, w fyne.Window){
+func performDownload(file *keygen.File, conf *config.Config, w fyne.Window){
+	w.SetContent(container.NewVBox(
+		widget.NewLabel("Downloading ..."),
+		widget.NewProgressBarInfinite(),
+	))
 
+	path := filepath.Join(conf.PackagePath, file.Filename)
+	err := keygen.DownloadPackage(file, path)
+	if err != nil {
+		log.Print(err)
+		dialog.ShowError(err, w)
+		showEntries(conf, w)
+		return
+	}
+	
+	w.SetContent(container.NewVBox(
+		widget.NewLabel("Extracting ..."),
+		widget.NewProgressBarInfinite(),
+	))
+
+	err = keygen.ExtractPackage(path, conf.LocalPath)
+	if err != nil {
+		log.Print(err)
+		dialog.ShowError(err, w)
+		showEntries(conf, w)
+		return
+	}
+
+	conf.LocalFile = file;
+	showEntries(conf, w)
+	dialog.ShowInformation("Success", "Installed "+file.Version, w)
 }
 
 func showEntries(conf *config.Config, w fyne.Window){
@@ -60,11 +90,16 @@ func showEntries(conf *config.Config, w fyne.Window){
 	key, _ := keygen.ParseKeyURL(conf.KeyURL)
 	files, err := keygen.FetchKeyFiles(key)
 	if err != nil {
+		log.Print(err)
 		dialog.ShowError(err, w)
 		showKeyEntry(conf, w)
-		log.Print(err)
 	} else {
 		conf.LastChecked = time.Now().Unix()
+
+		candidate := keygen.FindMatchingOSFile(files)
+		if conf.LocalFile != nil {
+			candidate = keygen.FindUpdatedFile(files, conf.LocalFile)
+		}
 
 		list := widget.NewList(
 			func() int {
@@ -76,19 +111,17 @@ func showEntries(conf *config.Config, w fyne.Window){
 			func(i widget.ListItemID, o fyne.CanvasObject) {
 				o.(*FileItem).SetFile(&files[i])
 			})
-
+		list.OnSelected = func(i widget.ListItemID) {
+			candidate = &files[i]
+		}
+		
 		w.SetContent(container.NewBorder(
 			widget.NewLabel("Available Files:"),
 			widget.NewButtonWithIcon("Install", theme.DownloadIcon(), func() {
-				performDownload(conf, w)
+				performDownload(candidate, conf, w)
 			}),
 			nil, nil, list,
 		))
-
-		candidate := keygen.FindMatchingOSFile(files)
-		if conf.LocalFile != nil {
-			candidate = keygen.FindUpdatedFile(files, conf.LocalFile)
-		}
 		for i := 0; i < len(files); i++ {
 			if &files[i] == candidate {
 				list.Select(i)
