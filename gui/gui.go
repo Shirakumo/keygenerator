@@ -55,6 +55,7 @@ func performDownload(file *keygen.File, conf *config.Config, w fyne.Window){
 	))
 
 	path := filepath.Join(conf.PackagePath, file.Filename)
+	log.Printf("Downloading %v to %v\n", file.Version, path)
 	err := keygen.DownloadPackage(file, path)
 	if err != nil {
 		log.Print(err)
@@ -68,6 +69,7 @@ func performDownload(file *keygen.File, conf *config.Config, w fyne.Window){
 		widget.NewProgressBarInfinite(),
 	))
 
+	log.Printf("Extracting %v to %v\n", path, conf.LocalPath)
 	err = keygen.ExtractPackage(path, conf.LocalPath)
 	if err != nil {
 		log.Print(err)
@@ -78,6 +80,7 @@ func performDownload(file *keygen.File, conf *config.Config, w fyne.Window){
 
 	conf.LocalFile = file;
 	showEntries(conf, w)
+	log.Printf("Successfully installed %v\n", file.Version)
 	dialog.ShowInformation("Success", "Installed "+file.Version, w)
 }
 
