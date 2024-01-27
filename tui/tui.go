@@ -19,6 +19,63 @@ func prompt(message string) string {
 	return scanner.Text()
 }
 
+func printFiles(candidate *keygen.File, files []keygen.File) int {
+	selected := 0
+	for i := 0; i < len(files); i++ {
+		f := &files[i]
+		t := time.Unix(f.LastModified, 0)
+		if f == candidate {
+			selected = i
+			fmt.Printf("=> ")
+		} else {
+			fmt.Printf("   ")
+		}
+		fmt.Printf("%2v: %v %v %10v %v\n", i, f.Version, t.Format("2006-01-02 15:04:05"), f.Types, f.Filename)
+	}
+	return selected
+}
+
+func eexit(v ...any) {
+	fmt.Print(v...)
+	fmt.Println()
+	os.Exit(1)
+}
+
+func List(conf *config.Config) {
+	if conf.KeyURL == "" { eexit("No KeyURL set.") }
+	key, err := keygen.ParseKeyURL(conf.KeyURL)
+	if err != nil { eexit(err) }
+	files, err := keygen.FetchKeyFiles(key)
+	if err != nil { eexit(err) }
+	candidate := keygen.FindMatchingOSFile(files)
+	if conf.LocalFile != nil {
+		candidate = keygen.FindUpdatedFile(files, conf.LocalFile)
+	}
+	printFiles(candidate, files)
+}
+
+func Update(conf *config.Config) {
+	if conf.KeyURL == "" { eexit("No KeyURL set.") }
+	key, err := keygen.ParseKeyURL(conf.KeyURL)
+	if err != nil { eexit(err) }
+	files, err := keygen.FetchKeyFiles(key)
+	if err != nil { eexit(err) }
+	candidate := keygen.FindMatchingOSFile(files)
+	if conf.LocalFile != nil {
+		candidate = keygen.FindUpdatedFile(files, conf.LocalFile)
+	}
+	if candidate == nil {
+		fmt.Print("Already up to date.")
+		return
+	}
+	path := filepath.Join(conf.PackagePath, candidate.Filename)
+	err = keygen.DownloadPackage(candidate, path)
+	if err != nil { eexit(err) }
+	err = keygen.ExtractPackage(path, conf.LocalPath)
+	if err != nil { eexit(err) }
+	fmt.Print("Successfully updated to "+candidate.Version)
+}
+
 func Main(conf *config.Config) {
 	var key *keygen.Key = nil
 	var err error = nil
@@ -55,19 +112,8 @@ func Main(conf *config.Config) {
 		candidate = keygen.FindUpdatedFile(files, conf.LocalFile)
 	}
 
-	selected := 0
 	fmt.Println("")
-	for i := 0; i < len(files); i++ {
-		f := &files[i]
-		t := time.Unix(f.LastModified, 0)
-		if f == candidate {
-			selected = i
-			fmt.Printf("=> ")
-		} else {
-			fmt.Printf("   ")
-		}
-		fmt.Printf("%2v: %v %v %10v %v\n", i, f.Version, t.Format("2006-01-02 15:04:05"), f.Types, f.Filename)
-	}
+	selected := printFiles(candidate, files)
 	fmt.Println("")
 	for true {
 		res := prompt(fmt.Sprintf("Select the version to download [%v]", selected))
