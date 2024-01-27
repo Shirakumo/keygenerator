@@ -1,2 +1,28 @@
 # About Keygenerator
 This is a companion app to ''keygen''(https://shirakumo.org/projects/keygen), a self-hosted software key distribution platform. It allows users to automatically check for and install updates to their software packages.
+
+You can download precompiled binaries from the ''releases''(https://shirakumo.org/projects/keygen/releases/latest) page and run it directly. By default it'll present with a GUI and install things directly in the same directory as the binary.
+
+## Command Line
+If you would like to use the updater without a GUI, you can invoke it from the command line with the following arguments:
+
+::
+  -config string
+    	The config file to read (defaults to .key in the binary directory)
+  -gui
+    	Whether to use the GUI or not (default true)
+  -key string
+    	The Key URL to access
+  -path string
+    	The directory to extract things to
+  -tmp string
+    	The directory to store packages in
+::
+
+So for instance:
+
+::
+keygenerator --gui false --key "..."
+::
+
+Will automatically fetch the files for the given key and present a terminal UI to manage updates with, instead.
