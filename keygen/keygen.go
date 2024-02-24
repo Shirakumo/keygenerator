@@ -39,7 +39,20 @@ type Key struct {
 	Authcode string
 }
 
-func ExtractPackage(src, dest string) error {
+type ProgressCallback func(progress int64, total int64)
+type Progress struct {
+	Total int64
+	Current int64
+	Callback ProgressCallback
+}
+func (p *Progress) Write(b []byte) (n int, err error) {
+	n = len(b)
+	p.Current = p.Current + int64(n)
+	p.Callback(p.Current, p.Total)
+	return
+}
+
+func ExtractPackageProgress(src, dest string, progress ProgressCallback) error {
     dest = filepath.Clean(dest) + string(os.PathSeparator)
 
     r, err := zip.OpenReader(src)
@@ -94,31 +107,23 @@ func ExtractPackage(src, dest string) error {
         return nil
     }
 
+	count := int64(0)
+	total := int64(len(r.File))
+	progress(0, total)
     for _, f := range r.File {
         err := extractAndWriteFile(f)
         if err != nil {
             return err
         }
+		count++
+		progress(count, total)
     }
 
     return nil
 }
 
-func DownloadPackage(file *File, path string) error {
-	return DownloadPackageProgress(file, path, func(progress float64){})
-}
-
-type ProgressCallback func(progress float64)
-type Progress struct {
-	Total int64
-	Current int64
-	Callback ProgressCallback
-}
-func (p *Progress) Write(b []byte) (n int, err error) {
-	n = len(b)
-	p.Current = p.Current + int64(n)
-	p.Callback(float64(p.Current * 100) / float64(p.Total))
-	return
+func ExtractPackage(src, dest string) error {
+	return ExtractPackageProgress(src, dest, func(progress int64, total int64){})
 }
 
 func DownloadPackageProgress(file *File, path string, progress ProgressCallback) error {
@@ -148,6 +153,10 @@ func DownloadPackageProgress(file *File, path string, progress ProgressCallback)
 		return err
 	}
 	return nil
+}
+
+func DownloadPackage(file *File, path string) error {
+	return DownloadPackageProgress(file, path, func(progress int64, total int64){})
 }
 
 func FetchKeyFiles(key *Key) ([]File, error) {

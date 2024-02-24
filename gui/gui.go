@@ -51,7 +51,6 @@ func (item *FileItem) CreateRenderer() fyne.WidgetRenderer {
 func performDownload(file *keygen.File, conf *config.Config, w fyne.Window){
 	progress := widget.NewProgressBar()
 	progress.Min = 0.0
-	progress.Max = 100.0
 	w.SetContent(container.NewVBox(
 		widget.NewLabel("Downloading ..."),
 		progress,
@@ -59,8 +58,9 @@ func performDownload(file *keygen.File, conf *config.Config, w fyne.Window){
 
 	path := filepath.Join(conf.PackagePath, file.Filename)
 	log.Printf("Downloading %v to %v\n", file.URL, path)
-	err := keygen.DownloadPackageProgress(file, path, func(prog float64){
-		progress.SetValue(prog)
+	err := keygen.DownloadPackageProgress(file, path, func(current int64, total int64){
+		progress.Max = float64(total)
+		progress.SetValue(float64(current))
 	})
 	if err != nil {
 		log.Print(err)
@@ -71,11 +71,14 @@ func performDownload(file *keygen.File, conf *config.Config, w fyne.Window){
 	
 	w.SetContent(container.NewVBox(
 		widget.NewLabel("Extracting ..."),
-		widget.NewProgressBarInfinite(),
+		progress,
 	))
 
 	log.Printf("Extracting %v to %v\n", path, conf.LocalPath)
-	err = keygen.ExtractPackage(path, conf.LocalPath)
+	err = keygen.ExtractPackageProgress(path, conf.LocalPath, func(current int64, total int64){
+		progress.Max = float64(total)
+		progress.SetValue(float64(current))
+	})
 	if err != nil {
 		log.Print(err)
 		dialog.ShowError(err, w)

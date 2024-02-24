@@ -70,12 +70,21 @@ func Update(conf *config.Config) {
 		return
 	}
 	path := filepath.Join(conf.PackagePath, candidate.Filename)
-	bar := progressbar.Default(100)
-	err = keygen.DownloadPackageProgress(candidate, path, func(prog float64){
-		bar.Set(int(prog))
+	bar := progressbar.DefaultBytes(100, "downloading")
+	err = keygen.DownloadPackageProgress(candidate, path, func(progress int64, total int64){
+		bar.ChangeMax64(total)
+		bar.Set64(progress)
 	})
 	bar.Finish()
 	if err != nil { eexit(err) }
+
+	bar.Clear()
+	bar = progressbar.Default(100, "extracting")
+	err = keygen.ExtractPackageProgress(path, conf.LocalPath, func(progress int64, total int64){
+		bar.ChangeMax64(total)
+		bar.Set64(progress)
+	})
+	bar.Finish()
 	err = keygen.ExtractPackage(path, conf.LocalPath)
 	if err != nil { eexit(err) }
 	fmt.Print("Successfully updated to "+candidate.Version)
@@ -145,9 +154,10 @@ func Main(conf *config.Config) {
 		}
 		
 		fmt.Println("Downloading to "+path)
-		bar := progressbar.Default(100)
-		err = keygen.DownloadPackageProgress(candidate, path, func(prog float64){
-			bar.Set(int(prog))
+		bar := progressbar.DefaultBytes(100, "downloading")
+		err = keygen.DownloadPackageProgress(candidate, path, func(progress int64, total int64){
+			bar.ChangeMax64(total)
+			bar.Set64(progress)
 		})
 		bar.Finish()
 		if err != nil {
@@ -156,7 +166,12 @@ func Main(conf *config.Config) {
 		}
 
 		fmt.Println("Extracting "+path+" to "+conf.LocalPath)
-		err = keygen.ExtractPackage(path, conf.LocalPath)
+		bar = progressbar.Default(100, "extracting")
+		err = keygen.ExtractPackageProgress(path, conf.LocalPath, func(progress int64, total int64){
+			bar.ChangeMax64(total)
+			bar.Set64(progress)
+		})
+		bar.Finish()
 		if err != nil {
 			fmt.Println(err)
 			return
