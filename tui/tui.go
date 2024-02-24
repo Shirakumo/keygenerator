@@ -72,8 +72,9 @@ func Update(conf *config.Config) {
 	path := filepath.Join(conf.PackagePath, candidate.Filename)
 	bar := progressbar.Default(100)
 	err = keygen.DownloadPackageProgress(candidate, path, func(prog float64){
-		bar.Add(int(prog))
+		bar.Set(int(prog))
 	})
+	bar.Finish()
 	if err != nil { eexit(err) }
 	err = keygen.ExtractPackage(path, conf.LocalPath)
 	if err != nil { eexit(err) }
@@ -146,8 +147,9 @@ func Main(conf *config.Config) {
 		fmt.Println("Downloading to "+path)
 		bar := progressbar.Default(100)
 		err = keygen.DownloadPackageProgress(candidate, path, func(prog float64){
-			bar.Add(int(prog))
+			bar.Set(int(prog))
 		})
+		bar.Finish()
 		if err != nil {
 			fmt.Println(err)
 			return
