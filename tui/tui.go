@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"github.com/schollz/progressbar/v3"
 	"keygenerator/keygen"
 	"keygenerator/config"
 	"path/filepath"
@@ -69,7 +70,10 @@ func Update(conf *config.Config) {
 		return
 	}
 	path := filepath.Join(conf.PackagePath, candidate.Filename)
-	err = keygen.DownloadPackage(candidate, path)
+	bar := progressbar.Default(100)
+	err = keygen.DownloadPackageProgress(candidate, path, func(prog float64){
+		bar.Add(int(prog))
+	})
 	if err != nil { eexit(err) }
 	err = keygen.ExtractPackage(path, conf.LocalPath)
 	if err != nil { eexit(err) }
@@ -140,7 +144,10 @@ func Main(conf *config.Config) {
 		}
 		
 		fmt.Println("Downloading to "+path)
-		err = keygen.DownloadPackage(candidate, path)
+		bar := progressbar.Default(100)
+		err = keygen.DownloadPackageProgress(candidate, path, func(prog float64){
+			bar.Add(int(prog))
+		})
 		if err != nil {
 			fmt.Println(err)
 			return
